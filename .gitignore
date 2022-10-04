@@ -1,0 +1,16 @@
+#some stuff
+.idea/
+
+#virtual env
+venv/
+
+#database
+db.sqlite3
+
+#migrations
+assignment/migrations/
+
+#static file
+files/
+
+
