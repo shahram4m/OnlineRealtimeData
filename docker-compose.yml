@@ -1,0 +1,48 @@
+version: '3.5'
+
+services:
+  elements:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/elements
+      - elements_static_volume:/elements/static
+      - elements_files_volume:/elements/file
+    restart: always
+    expose:
+      - "8000"
+    networks:
+      - elements_network
+      - nginx_network
+    depends_on:
+      - elements_postgresql
+
+  elements_postgresql:
+    container_name: elements_postgresql_container
+    image: postgres:12
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /data/postgres
+    volumes:
+       - elements_postgresql:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - elements_network
+    restart: always
+
+networks:
+  elements_network:
+    external: true
+  nginx_network:
+    external: true
+
+volumes:
+    elements_postgresql:
+      external: true
+    elements_static_volume:
+      external: true
+    elements_files_volume:
+      external: true
