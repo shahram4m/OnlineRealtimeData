@@ -1,17 +1,41 @@
 version: '3.5'
 
 services:
+  nginx:
+    restart: always
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - 1300:80
+    volumes:
+      - elements_static_volume:/home/app/elements/static
+      - elements_files_volume:/home/app/elements/static
+    env_file:
+      - .env
+    networks:
+      - nginx_network
+    depends_on:
+      - elements
+
   elements:
     build:
       context: .
       dockerfile: Dockerfile
+    command: sh -c "python manage.py makemigrations &&
+                    python manage.py migrate &&
+                    python manage.py flush --no-input &
+                    python manage.py collectstatic &&
+                    python manage.py flush --no-input &
+                    gunicorn elements.wsgi:application --bind 0.0.0.0:${APP_PORT}"
     volumes:
       - .:/elements
       - elements_static_volume:/elements/static
       - elements_files_volume:/elements/file
     restart: always
+    #image: elementsapp
     expose:
-      - "8000"
+      - ${APP_PORT}
     networks:
       - elements_network
       - nginx_network

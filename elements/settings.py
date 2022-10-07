@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-zw!z5q7-_etj+#(9h!@s7ww$7vjz0sg3smsfbbkd1e*6a(9x0^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'assignment',
     'rest_framework',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -81,11 +82,10 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'HOST': 'elements_postgresql',
+        'PORT': '',
     }
 }
-
 
 
 # Password validation
@@ -135,4 +135,5 @@ CSVURL = 'https://docs.google.com/spreadsheet/ccc?key=0Aqg9JQbnOwBwdEZFN2JKeldGZ
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }

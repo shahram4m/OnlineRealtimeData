@@ -1,14 +1,33 @@
 FROM python:3.8
 LABEL MAINTIANER="SHAHRAM dOCKER | ZCFCO.IR"
 
-ENV PYTHONNONEBUFFRED 1
+ENV ELEMENTS_SERVICE=/home/app/elements
 
-RUN mkdir /elements
-WORKDIR /elements
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-COPY . /elements
+# set work directory
+RUN mkdir -p $ELEMENTS_SERVICE
+RUN mkdir -p $ELEMENTS_SERVICE/static
 
-ADD requirements/requirements.txt /elements
+# where the code lives
+WORKDIR $ELEMENTS_SERVICE
+
+# install psycopg2 dependencies
+RUN apk update \
+    && apk add --virtual build-deps gcc python3-dev musl-dev \
+    && apk add postgresql-dev gcc python3-dev musl-dev \
+    && apk del build-deps \
+    && apk --no-cache add musl-dev linux-headers g++
+
+# install dependencies
+RUN pip install --upgrade pip
+
+# copy project
+COPY . $ELEMENTS_SERVICE
+
+ADD requirements/requirements.txt $ELEMENTS_SERVICE
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 

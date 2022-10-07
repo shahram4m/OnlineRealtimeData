@@ -1,4 +1,8 @@
 from django.core.paginator import Paginator
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, mixins, viewsets
@@ -8,64 +12,55 @@ from assignment.serializers import InformationSerializer
 from helper.Validator import ValidatUrl
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 
-
-class GetAllInformationFromCSVAPIView(APIView):
-
-    def get(self, request, format=None):
-        try:
-            if settings.CSVURL and ValidatUrl(settings.CSVURL):
-                #do process
-                #data = read_csv_data()
-
-                return Response({'data': "jdata"}, status=status.HTTP_200_OK)
-            else:
-                return Response({'status': 'Bad Request, url Not Found.'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({'status': "Internal Server Error, We'll Check It Later"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+#get data by predicate and paging
+#url sample like (http://127.0.0.1:8000/information/getByPredicate/?limit=5&offset=0&description=Description 1&title=1)
 class GetInformationByPredicateView(APIView):
+
+    # With cookie: cache requested url for each user for 1 hours
+    @method_decorator(cache_page(60*2))
+    @method_decorator(vary_on_cookie)
     def get(self, request, format=None):
         try:
             from django.db.models import Q
-            query = request.GET['query']
-            print(query)
-            informations = Information.objects.filter(Q(description__icontains=query))
-            data = []
-            for intormation in informations:
-                data.append({
-                    "title": intormation.title,
-                    "image": intormation.image if intormation.image else None,
-                    "description": intormation.description,
-                })
-
-            return Response({'data': data}, status=status.HTTP_200_OK)
-        except:
-            return Response({'status': "Internal Server Error, We'll Check It Later"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-class GetAllInformationPagingView(APIView):
-    def get(self, request, format=None):
-        try:
             informations = Information.objects.all()
-            pagination_class = LimitOffsetPagination
-            data = []
-            for intormation in informations:
-                data.append({
-                    "title": intormation.title,
-                    "image": intormation.image if intormation.image else None,
-                    "description": intormation.description,
-                })
+            title_query = self.request.query_params.get('title', None)
+            description_query = self.request.query_params.get('description', None)
 
-            return Response({'data': data}, status=status.HTTP_200_OK)
+            if title_query:
+                informations = informations.filter(Q(title__icontains=title_query))
+
+            if description_query:
+                informations = informations.filter(Q(description__contains=description_query))
+
+            if len(informations) > 0:
+                # using LimitOffsetPagination
+                paginator = LimitOffsetPagination()
+                result_page = paginator.paginate_queryset(informations, request)
+                serializer = InformationSerializer(result_page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            else:
+                return Response({}, status=status.HTTP_200_OK)
         except:
             return Response({'status': "Internal Server Error, We'll Check It Later"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#get all data by paging
+#url sample like (http://127.0.0.1:8000/information/getAllItems/?limit=5&offset=5)
+class GetAllInformationView(APIView):
 
-class InfoList(APIView):
+    # With cookie: cache requested url for each user for 1 hours
+    @method_decorator(cache_page(60*2))
+    @method_decorator(vary_on_cookie)
     def get(self, request):
-        info = Information.objects.all().order_by('created_at')
-        paginator = LimitOffsetPagination()
-        result_page = paginator.paginate_queryset(info, request)
-        serializer = InformationSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        try:
+            informations = Information.objects.all().order_by('created_at')
+            if len(informations) > 0:
+                #using LimitOffsetPagination
+                paginator = LimitOffsetPagination()
+                result_page = paginator.paginate_queryset(informations, request)
+                serializer = InformationSerializer(result_page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            else:
+                return Response({}, status=status.HTTP_200_OK)
+        except:
+            return Response({'status': "Internal Server Error, We'll Check It Later"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
