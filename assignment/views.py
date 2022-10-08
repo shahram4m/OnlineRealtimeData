@@ -40,8 +40,8 @@ class GetInformationByPredicateView(APIView):
                 return paginator.get_paginated_response(serializer.data)
             else:
                 return Response({}, status=status.HTTP_200_OK)
-        except:
-            return Response({'status': "Internal Server Error, We'll Check It Later"},
+        except Exception as err:
+            return Response({'status': "Internal Server Error, We'll Check It Later", "Error:":str(err)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 #get all data by paging
 #url sample like (http://127.0.0.1:8000/information/getAllItems/?limit=5&offset=5)

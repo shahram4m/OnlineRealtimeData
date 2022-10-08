@@ -16,7 +16,6 @@ conn_params_dic = {
     "user": settings.DATABASES['default']['USER'],
     "password": settings.DATABASES['default']['PASSWORD']
 }
-dbConnection = None
 
 # Define a function that handles and parses psycopg2 exceptions
 def show_psycopg2_exception(err):
@@ -53,7 +52,7 @@ def connect_to_postgres(conn_params_dic):
     return conn
 
 # Define function using psycopg2.extras.execute_batch() to insert the dataframe
-def execute_batch(conn, datafrm, table, page_size=150):
+def execute_batch(conn, datafrm, table, page_size=100):
     print("in execute_batch...")
     # Creating a list of tupples from the dataframe values
     tpls = [tuple(x) for x in datafrm.to_numpy()]
@@ -85,12 +84,14 @@ def empty_table(table):
     dbConnection = connect_to_postgres(conn_params_dic)
 
     # prepaired SQL query to execute
-    sql = "DELETE FROM %s(%s) " % (table)
+    sql = "DELETE FROM %s" % table
+
     cursor = dbConnection.cursor()
-
     try:
-        cursor.execute(cursor, sql)
-
+        cursor.execute(sql)
+        dbConnection.commit()
+        rows_deleted = cursor.rowcount
+        print('rows deleted:', rows_deleted)
         # Closing the cursor & connection
         cursor.close()
         dbConnection.close()
@@ -105,41 +106,40 @@ def empty_table(table):
         show_psycopg2_exception(err)
 
 #import function for import csv data to postgres
-def do_import(csvData, pageSize):
-    # Connect to the database
-    dbConnection = connect_to_postgres(conn_params_dic)
-    dbConnection.autocommit = True
+def do_import(dbConnection, csvData, pageSize):
+
     # Run the execute_batch method
     execute_batch(dbConnection, csvData, 'assignment_information', pageSize)
-
-#create chunck for import
-def chunck_creator(filename, header=False, chunk_size = 15):
-   for chunk in pd.read_csv(filename, delimiter=',', iterator=True, chunksize=chunk_size, parse_dates=[1]):
-        yield (chunk)
-
-#get creator for chunck generator
-def _creator(filename, header=False, chunk_size = 15):
-    chunk = chunck_creator(filename, header=False, chunk_size=chunk_size)
-    for row in chunk:
-        yield row
 
 # Define function for read csv data from file and use in scheduler
 def read_csv_data():
     #logger.debug("read_csv_data fired... at", str(datetime.now()))
     #check is file url is valid and file exist in url then start
-    if settings.CSVURL and ValidatUrl(settings.CSVURL):
-        empty_table('assignment_information')
-        generator = _creator(filename=settings.CSVURL, chunk_size=15)
-        while True:
-            date = next(generator)
-            do_import(date, 15)
-            #next(generator)
-        # Close the connection
-        dbConnection.close()
+    try:
+        # Connect to the database
+        dbConnection = connect_to_postgres(conn_params_dic)
+        dbConnection.autocommit = True
 
-#test job
+        if settings.CSVURL and ValidatUrl(settings.CSVURL):
+            empty_table('assignment_information')
+            chunksize = 1000
+            for chunk in pd.read_csv(settings.CSVURL, chunksize=chunksize):
+                do_import(dbConnection, chunk, chunksize)
+
+            # Close and commit the connection
+            dbConnection.commit()
+            dbConnection.close()
+    except Exception as err:
+        print('error in read_csv_data:', err)
+        print("Exception TYPE:", type(err))
+
+
+#tests job
 def testJob():
     print('job run at=', str(datetime.now()))
 
+def IntialDb():
+    print('IntialDb...')
+    read_csv_data()
 
 
