@@ -43,6 +43,7 @@ class GetInformationByPredicateView(APIView):
         except Exception as err:
             return Response({'status': "Internal Server Error, We'll Check It Later", "Error:":str(err)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 #get all data by paging
 #url sample like (http://127.0.0.1:8000/information/getAllItems/?limit=5&offset=5)
 class GetAllInformationView(APIView):

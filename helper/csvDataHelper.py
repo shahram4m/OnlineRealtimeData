@@ -62,20 +62,21 @@ def execute_batch(conn, datafrm, table, page_size=100):
 
     # SQL query to execute
     sql = "INSERT INTO %s(%s) VALUES(%%s,%%s,%%s)" % (table, cols)
-    cursor = conn.cursor()
-    try:
-        extras.execute_batch(cursor, sql, tpls, page_size)
-        conn.commit()
-        print("Data inserted using execute_batch() successfully...")
-        #logger.debug("Data inserted using execute_batch() successfully...")
-    except Exception as err:
-        print("Oops! An exception has occured:", err)
-        #logger.debug("Oops! An exception has occured:", err)
-        print("Exception TYPE:", type(err))
-    except (Exception, psycopg2.DatabaseError) as err:
-        # pass exception to function
-        show_psycopg2_exception(err)
-        cursor.close()
+    if len(tpls[0]) == len(list(datafrm.columns)) == 3:
+        cursor = conn.cursor()
+        try:
+            extras.execute_batch(cursor, sql, tpls, page_size)
+            conn.commit()
+            print("Data inserted using execute_batch() successfully...")
+            #logger.debug("Data inserted using execute_batch() successfully...")
+        except Exception as err:
+            print("Oops! An exception has occured:", err)
+            #logger.debug("Oops! An exception has occured:", err)
+            print("Exception TYPE:", type(err))
+        except (Exception, psycopg2.DatabaseError) as err:
+            # pass exception to function
+            show_psycopg2_exception(err)
+            cursor.close()
 
 # Define function for delete all record before insert
 def empty_table(table):

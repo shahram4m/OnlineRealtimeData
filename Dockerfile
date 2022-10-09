@@ -15,11 +15,11 @@ RUN mkdir -p $ELEMENTS_SERVICE/static
 WORKDIR $ELEMENTS_SERVICE
 
 # install psycopg2 dependencies
-RUN apk update \
-    && apk add --virtual build-deps gcc python3-dev musl-dev \
-    && apk add postgresql-dev gcc python3-dev musl-dev \
-    && apk del build-deps \
-    && apk --no-cache add musl-dev linux-headers g++
+#RUN apk update \
+#    && apk add --virtual build-deps gcc python3-dev musl-dev \
+#    && apk add postgresql-dev gcc python3-dev musl-dev \
+#    && apk del build-deps \
+#    && apk --no-cache add musl-dev linux-headers g++
 
 # install dependencies
 RUN pip install --upgrade pip
@@ -27,8 +27,8 @@ RUN pip install --upgrade pip
 # copy project
 COPY . $ELEMENTS_SERVICE
 
+
 ADD requirements/requirements.txt $ELEMENTS_SERVICE
-RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 
