@@ -2,7 +2,7 @@
 <p align="center">
   <img src="https://assets.website-files.com/5cd40c117f1ff810bf42803b/6113f5151e62af8a73e8c924_logo-motion-black.svg">
 </p>
-elements is a simple rest api application written by Python3.x & Django 4.x This project is for present.
+elements assignment is a simple rest api application written by Python3.x & Django 4.x This project is for present.
 
 ##  Demo
 [Final project preview.](in progress)
