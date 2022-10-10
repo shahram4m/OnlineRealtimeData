@@ -9,7 +9,6 @@ from rest_framework import status, mixins, viewsets
 from django.conf import settings
 from assignment.models import Information, FileInformation
 from assignment.serializers import InformationSerializer, CreatFileInformationSerializer, FileInformationSerializer
-from helper.Validator import ValidatUrl
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 
 #get data by predicate and paging

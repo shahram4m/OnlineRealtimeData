@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-from helper.csvDataHelper import IntialDb
+from assignment.services import IntialDb
 
 
 class AssignmentConfig(AppConfig):
@@ -8,5 +8,5 @@ class AssignmentConfig(AppConfig):
 
     def ready(self):
         IntialDb()
-        from helper import SyncDbAndCsv_Job
-        SyncDbAndCsv_Job.start()
+        from share import scheduler
+        scheduler.start()

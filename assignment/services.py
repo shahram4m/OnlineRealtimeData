@@ -7,7 +7,7 @@ from psycopg2._psycopg import OperationalError
 from sqlalchemy.dialects.postgresql import psycopg2
 from psycopg2 import connect
 import logging
-from helper.Validator import ValidatUrl
+from share.validator import ValidatUrl
 
 #logger = logging.getLogger(__name__)
 conn_params_dic = {
