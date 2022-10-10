@@ -42,7 +42,7 @@ def connect_to_postgres(conn_params_dic):
         #logger.debug('Connection successful..................')
     except Exception as err:
         print("Oops! An exception has occured:", err)
-        print("Exception TYPE:", type(err))
+        print("Exception Type:", type(err))
         #logger.debug("Oops! An exception has occured:", err)
     except OperationalError as err:
         # passing exception to function
@@ -72,7 +72,7 @@ def execute_batch(conn, datafrm, table, page_size=100):
         except Exception as err:
             print("Oops! An exception has occured:", err)
             #logger.debug("Oops! An exception has occured:", err)
-            print("Exception TYPE:", type(err))
+            print("Exception Type:", type(err))
         except (Exception, psycopg2.DatabaseError) as err:
             # pass exception to function
             show_psycopg2_exception(err)
@@ -101,7 +101,36 @@ def empty_table(table):
     except Exception as err:
         print("Oops! An exception has occured:", err)
         #logger.debug("Oops! An exception has occured:", err)
-        print("Exception TYPE:", type(err))
+        print("Exception type:", type(err))
+    except (Exception, psycopg2.DatabaseError) as err:
+        # pass exception to function
+        show_psycopg2_exception(err)
+
+# Define function for get last file url
+def get_last_file_url():
+    print("in get_last_file_url...")
+    # Connect to the database
+    dbConnection = connect_to_postgres(conn_params_dic)
+
+    # prepaired SQL query to execute
+    sql = "Select url from assignment_FileInformation order by assignment_fileinformation.created_at desc limit 1;"
+
+    cursor = dbConnection.cursor()
+    try:
+        cursor.execute(sql)
+        row = cursor.fetchone()[0]
+        print('last url:', str(row))
+        dbConnection.commit()
+        # Closing the cursor & connection
+        cursor.close()
+        dbConnection.close()
+        print("All last url successfully...")
+        return row
+        #logger.debug("All record deleted successfully...")
+    except Exception as err:
+        print("Oops! An exception has occured:", err)
+        #logger.debug("Oops! An exception has occured:", err)
+        print("Exception Type:", type(err))
     except (Exception, psycopg2.DatabaseError) as err:
         # pass exception to function
         show_psycopg2_exception(err)
@@ -121,7 +150,14 @@ def read_csv_data():
         dbConnection = connect_to_postgres(conn_params_dic)
         dbConnection.autocommit = True
 
-        if settings.CSVURL and ValidatUrl(settings.CSVURL):
+        #get latest url from db
+        latestUrl = get_last_file_url()
+        if latestUrl:
+            csvFileUrl = latestUrl
+        else:
+            csvFileUrl = settings.CSVURL
+
+        if csvFileUrl and ValidatUrl(csvFileUrl):
             empty_table('assignment_information')
             chunksize = 1000
             for chunk in pd.read_csv(settings.CSVURL, chunksize=chunksize):
@@ -130,10 +166,10 @@ def read_csv_data():
             # Close and commit the connection
             dbConnection.commit()
             dbConnection.close()
+
     except Exception as err:
         print('error in read_csv_data:', err)
         print("Exception TYPE:", type(err))
-
 
 #tests job
 def testJob():

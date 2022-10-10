@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, mixins, viewsets
 from django.conf import settings
-from assignment.models import Information
-from assignment.serializers import InformationSerializer
+from assignment.models import Information, FileInformation
+from assignment.serializers import InformationSerializer, CreatFileInformationSerializer, FileInformationSerializer
 from helper.Validator import ValidatUrl
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 
@@ -46,6 +46,7 @@ class GetInformationByPredicateView(APIView):
 
 #get all data by paging
 #url sample like (http://127.0.0.1:8000/information/getAllItems/?limit=5&offset=5)
+#Get
 class GetAllInformationView(APIView):
 
     # With cookie: cache requested url for each user for 1 hours
@@ -59,6 +60,55 @@ class GetAllInformationView(APIView):
                 paginator = LimitOffsetPagination()
                 result_page = paginator.paginate_queryset(informations, request)
                 serializer = InformationSerializer(result_page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+            else:
+                return Response({}, status=status.HTTP_200_OK)
+        except:
+            return Response({'status': "Internal Server Error, We'll Check It Later"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#create new url for csv file
+#url sample like (http://127.0.0.1:8000/fileInformation/create/)
+#Post
+class CreateFileInformationView(APIView):
+
+    def post(self, request, format=None):
+
+        try:
+            serializer = CreatFileInformationSerializer(data=request.data)
+            print(serializer)
+            if serializer.is_valid():
+                url = serializer.data.get('url')
+                print(url)
+            else:
+                return Response({'status': 'Bad Request.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            fileInformation = FileInformation()
+            fileInformation.url = url
+            fileInformation.save()
+
+            return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+        except:
+            return Response({'status': "Internal Server Error, We'll Check It Later"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#get all file information data by paging
+#url sample like (http://127.0.0.1:8000/fileInformation/getAllItems)
+#Get
+class GetAllFileInformationView(APIView):
+
+    # With cookie: cache requested url for each user for 1 hours
+    @method_decorator(cache_page(60*2))
+    @method_decorator(vary_on_cookie)
+    def get(self, request):
+        try:
+            fileInformations = FileInformation.objects.all().order_by('-created_at')
+            if len(fileInformations) > 0:
+                #using LimitOffsetPagination
+                paginator = LimitOffsetPagination()
+                result_page = paginator.paginate_queryset(fileInformations, request)
+                serializer = FileInformationSerializer(result_page, many=True)
                 return paginator.get_paginated_response(serializer.data)
             else:
                 return Response({}, status=status.HTTP_200_OK)

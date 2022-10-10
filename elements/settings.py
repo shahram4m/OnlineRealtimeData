@@ -83,6 +83,7 @@ WSGI_APPLICATION = 'elements.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+#get from .env file for live
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -90,11 +91,12 @@ DATABASES = {
         'USER': env('POSTGRES_USER'),
         'PASSWORD': env('POSTGRES_PASSWORD'),
         'HOST': 'localhost',
-        'HOST': env('DB_HOST'),
+        #'HOST': env('DB_HOST'),
         'PORT': env('DB_PORT'),
     }
 }
 
+#get from local for develope
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
